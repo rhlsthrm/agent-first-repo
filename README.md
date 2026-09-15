@@ -3,8 +3,9 @@
 An [Agent Skill](https://code.claude.com/docs/en/skills) for setting up — or auditing — a
 repository so coding agents can work in it effectively.
 
-The premise: **agent effectiveness is determined by the environment, not the prompt.** When an
-agent struggles, the fix is rarely a better prompt; it's a missing map, a missing invariant, or a
+The premise, from OpenAI's [harness engineering](https://openai.com/index/harness-engineering/)
+post: **agent effectiveness is determined by the environment, not the prompt.** When an agent
+struggles, the fix is rarely a better prompt; it's a missing map, a missing invariant, or a
 missing feedback loop in the repo. This skill encodes that into three concrete modes.
 
 ## What it does
@@ -57,8 +58,15 @@ Then ask your agent: *"audit this repo for agent-readiness"* or *"set this repo 
 
 ## Credit
 
-Built on the "Harness Engineering" framing — humans steer, agents execute, and the environment
-determines how well agents execute.
+Distilled from **[Harness engineering: leveraging Codex in an agent-first world](https://openai.com/index/harness-engineering/)**
+by Ryan Lopopolo (OpenAI, February 2026) — the write-up of a five-month experiment shipping a
+product with zero manually-written lines of code, on a team of three engineers driving Codex.
+
+Three ideas from that post drive this skill: `AGENTS.md` is a table of contents, not an
+encyclopedia; architecture is enforced mechanically through custom linters and structural tests
+rather than described in prose; and whatever an agent cannot reach in-context does not exist, so
+knowledge belongs in the repo as versioned artifacts. The post is worth reading in full — this
+skill is the checklist version.
 
 ## License
 
