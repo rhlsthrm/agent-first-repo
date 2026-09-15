@@ -1,6 +1,6 @@
 ---
 name: agent-first-repo
-description: Initialize or audit a repository for agent-first development. Sets up structured docs, ARCHITECTURE.md, CLAUDE.md as a map, mechanical enforcement via linters/tests, and observability wiring. Use when starting a new project, onboarding agents to an existing repo, or auditing agent-readiness.
+description: Initialize or audit a repository for agent-first development. Sets up structured docs, ARCHITECTURE.md, AGENTS.md as a map, mechanical enforcement via linters/tests/hooks, and observability wiring. Use when starting a new project, onboarding agents to an existing repo, or auditing agent-readiness.
 ---
 
 This skill guides setting up (or auditing) a repository so that coding agents can work effectively. Based on OpenAI's "Harness Engineering" principles: humans steer, agents execute, and the environment determines agent effectiveness.
@@ -14,7 +14,7 @@ Agent effectiveness is determined by the environment, not the prompt. When an ag
 Three laws:
 1. **If the agent can't see it, it doesn't exist.** Knowledge in Slack, Notion, or people's heads is invisible.
 2. **Enforce invariants, not implementations.** Tell agents the boundaries; let them solve within them.
-3. **Context is scarce.** A giant instruction file crowds out the task. Use progressive disclosure.
+3. **Context is scarce.** A giant instruction file crowds out the task. Use progressive disclosure: the entry-point file holds facts that apply every session, while procedures become skills (`.claude/skills/<name>/SKILL.md`) and area-specific rules become path-scoped files (`.claude/rules/*.md` with `paths:` frontmatter). Both load only when relevant.
 
 ## Mode: Init (new repo or first-time setup)
 
@@ -24,13 +24,14 @@ Before generating anything, understand:
 - What language/framework? (determines linter and test tooling)
 - Monorepo or single package?
 - What's the domain? (determines architecture layers)
-- Does a CLAUDE.md or AGENTS.md already exist?
+- Does an AGENTS.md or CLAUDE.md already exist?
 - Is there existing CI?
 
 ### Step 2 — Create the docs skeleton
 
 ```
-CLAUDE.md              # ~100 lines max. The map. Points to deeper docs.
+AGENTS.md              # ~100 lines max. The map. Points to deeper docs.
+CLAUDE.md              # One line: `@AGENTS.md`. Claude Code reads this name, not AGENTS.md.
 ARCHITECTURE.md        # Domain map, package layering, dependency directions
 docs/
   design-docs/
@@ -45,12 +46,12 @@ docs/
 ```
 
 Not every project needs every file. Start with what's relevant:
-- **Always**: CLAUDE.md, ARCHITECTURE.md
+- **Always**: AGENTS.md, ARCHITECTURE.md
 - **If multi-step features planned**: docs/exec-plans/
 - **If 2+ engineers or agents**: docs/CONVENTIONS.md
 - **If external APIs or complex deps**: docs/references/
 
-### Step 3 — Write CLAUDE.md / AGENTS.md as a map
+### Step 3 — Write AGENTS.md as a map
 
 The entry-point file should be ~100 lines. It contains:
 
@@ -63,6 +64,8 @@ The entry-point file should be ~100 lines. It contains:
 7. **What NOT to do** — explicit anti-patterns (these save more agent time than positive rules)
 
 Anti-pattern: Don't put the full architecture, all conventions, every API pattern, and the test strategy in this file. That's the encyclopedia approach — it rots and overwhelms.
+
+Name it `AGENTS.md`. It is an open format read by Codex, Cursor, Copilot, Gemini CLI, Zed, Aider and others, and is used by 60k+ public repos. Claude Code is the exception: it reads `CLAUDE.md`, so add a `CLAUDE.md` whose first line is `@AGENTS.md` (or `ln -s AGENTS.md CLAUDE.md`) and put any Claude-specific instructions below the import. One source of truth, no duplication.
 
 ### Step 4 — Write ARCHITECTURE.md
 
@@ -82,8 +85,11 @@ Documentation alone doesn't prevent drift. For each constraint that matters, pic
 |-------|-----------|-------------|
 | 1. Docs only | ARCHITECTURE.md, CONVENTIONS.md | Soft preferences, style guidance |
 | 2. Lint rule | Custom ESLint/Biome/clippy rule | Naming, imports, file structure |
-| 3. Structural test | Unit test that asserts architecture | Dependency directions, layer boundaries |
-| 4. CI gate | Fails the build | Security invariants, critical correctness |
+| 3. Pre-action hook | `PreToolUse` hook that exits non-zero | Protected paths, forbidden commands — blocks before the edit lands |
+| 4. Structural test | Unit test that asserts architecture | Dependency directions, layer boundaries |
+| 5. CI gate | Fails the build | Security invariants, critical correctness |
+
+Levels 1 and 2 are context: the agent can read them and still decide otherwise. A hook is not — it runs deterministically and can refuse the action outright, which is what you want for anything an instruction file merely asks nicely about. It also returns its stderr to the agent, so the same remediation rule below applies.
 
 For custom lint rules: **always include remediation instructions in the error message.** When a lint fails, the error message becomes agent context. "Error: service layer must not import from UI layer. Move this logic to src/services/ or create a shared type in src/types/." is 10x more useful than "Import violation."
 
@@ -95,7 +101,7 @@ Minimum enforcement for any project:
 
 ### Step 6 — Agent observability (project-specific)
 
-Wire up what's relevant to the project type:
+Wire up what's relevant to the project type. Whatever the type, record the launch recipe rather than leaving it to inference: `/run-skill-generator` gets the app running from a clean environment and commits what worked to `.claude/skills/run-<name>/`, so `/run`, `/verify` and every other agent in the repo follow it instead of rediscovering the build.
 
 **For web/frontend projects:**
 - Make the app bootable per git worktree (isolated instances)
@@ -147,7 +153,7 @@ When auditing an existing repo for agent-readiness, check each item and report:
 ### Checklist
 
 **Context & Navigation**
-- [ ] Entry-point file exists (CLAUDE.md / AGENTS.md) and is under 150 lines
+- [ ] Entry-point file exists (AGENTS.md, with CLAUDE.md importing it) and is under 200 lines
 - [ ] ARCHITECTURE.md exists with domain map and dependency rules
 - [ ] Docs directory exists with indexed design decisions
 - [ ] Key decisions are in-repo (not only in Slack/Notion/Google Docs)
@@ -198,7 +204,7 @@ After initial setup, maintain quality with a recurring process:
 
 ## What This Skill Does NOT Cover
 
-- CI/CD pipeline setup (use devops skill)
+- CI/CD pipeline setup (pipeline syntax is platform-specific)
 - Specific framework scaffolding (use framework-specific tools)
 - Git workflow / branching strategy (project-specific)
 - Team process / PR review norms (org-specific)

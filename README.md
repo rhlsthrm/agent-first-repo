@@ -11,16 +11,17 @@ missing feedback loop in the repo. This skill encodes that into three concrete m
 
 | Mode | Trigger | Output |
 |------|---------|--------|
-| **Init** | "set up this repo for agents", "new project" | Docs skeleton, `CLAUDE.md`/`AGENTS.md` as a ~100-line map, `ARCHITECTURE.md` with dependency rules, mechanical enforcement, exec-plan template |
+| **Init** | "set up this repo for agents", "new project" | Docs skeleton, `AGENTS.md` as a ~100-line map (with `CLAUDE.md` importing it), `ARCHITECTURE.md` with dependency rules, mechanical enforcement, exec-plan template |
 | **Audit** | "how agent-ready is this repo?" | 16-point scorecard across context, enforcement, workflow, and doc health, plus the three highest-leverage fixes |
 | **Hygiene** | "sweep", "quality check" | Recurring pattern/doc-drift sweep and per-module quality grades |
 
 The opinionated parts worth stealing even if you don't install it:
 
 - **Entry-point file is a map, not an encyclopedia.** ~100 lines that point at deeper docs.
-  The everything-file rots and crowds out the actual task.
-- **Pick an enforcement level per constraint** — docs, lint rule, structural test, or CI gate.
-  Documentation alone does not prevent drift.
+  The everything-file rots and crowds out the actual task. Procedures become skills, and
+  area-specific rules become path-scoped, so neither costs context until it's relevant.
+- **Pick an enforcement level per constraint** — docs, lint rule, pre-action hook, structural
+  test, or CI gate. Instruction files are context the agent may override; a hook is not.
 - **Lint error messages are agent context.** Every custom rule states the remediation, because
   the failure text is what the agent reads next.
 - **Anti-patterns beat positive rules.** An explicit "what NOT to do" list saves more agent time
